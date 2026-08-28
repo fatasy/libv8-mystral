@@ -22,7 +22,10 @@ runs:
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.8' # https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/refs/heads/main/README.md
+        # depot_tools' ninja.py annotates `list[str]`, which needs 3.9 or
+        # newer; on 3.8 it raises "TypeError: 'type' object is not
+        # subscriptable" the moment the build reaches ninja.
+        python-version: '3.11'
 
     - name: Setup Build Tools
       shell: bash
