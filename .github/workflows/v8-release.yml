@@ -12,9 +12,13 @@ jobs:
     # accident. This fork exists precisely to run it: upstream still tags every
     # V8 bump but stopped publishing release artifacts, so the tags carry
     # nothing to download. See mystralnative tasks/plans/21-v8-update.md.
+    # Windows only. The release job waits for every matrix entry, and GitHub's
+    # macos-13 (Intel) runners sat queued for over four hours — one scarce
+    # runner was enough to stop a finished Windows build from ever publishing.
+    # Restore the other platforms when they are actually needed.
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-13, macos-latest, windows-latest]
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Code
@@ -59,9 +63,12 @@ jobs:
         with:
           archive-name: ${{ env.ARCHIVE_NAME }}
 
+      # No continue-on-error. It is what turned the first attempt into four
+      # green jobs and zero artifacts: the build failed, the step reported
+      # success, and the empty release looked like a successful one. A build
+      # that fails should say so.
       - name: Build Release for Windows
         if: startsWith(matrix.os, 'windows')
-        continue-on-error: true
         uses: ./.github/actions/build-windows
         with:
           archive-name: ${{ env.ARCHIVE_NAME }}
