@@ -1,3 +1,19 @@
+> **Fork note.** Upstream (`kuoruan/libv8`) still tracks V8 within days — tags
+> exist through `v15.2.124.18` — but its release publishing stopped at
+> `v13.1.201.22` (2025-01-08), so those tags carry no downloadable artifacts.
+> The likely cause is that its `secrets.PAT` lapsed: `v8-version-check.yml`
+> checks out with that token and pushes the tags, and a push made with the
+> default `GITHUB_TOKEN` deliberately does not trigger workflows.
+>
+> This fork exists to build and publish those artifacts. Two differences from
+> upstream: the `build` job in `v8-release.yml` no longer refuses to run outside
+> `kuoruan`, and tags are pushed by hand so the release workflow actually fires.
+> The build recipe itself is unchanged — that is the point, since the upstream
+> configuration is what produces artifacts compatible with MystralNative.
+>
+> Consumed by `mystralnative` via `scripts/download-deps.mjs`; see that repo's
+> `docs/V8_PREBUILTS.md` and `tasks/plans/21-v8-update.md`.
+
 # Build V8 Monolith Library with GitHub Actions
 
 ![Build Status](https://github.com/kuoruan/libv8/actions/workflows/v8-build-test.yml/badge.svg)

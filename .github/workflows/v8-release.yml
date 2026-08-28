@@ -8,7 +8,10 @@ on:
 jobs:
   build:
     name: Build V8
-    if: github.repository_owner == 'kuoruan'
+    # Upstream gates this on the owner so forks do not burn Actions minutes by
+    # accident. This fork exists precisely to run it: upstream still tags every
+    # V8 bump but stopped publishing release artifacts, so the tags carry
+    # nothing to download. See mystralnative tasks/plans/21-v8-update.md.
     strategy:
       matrix:
         os: [ubuntu-latest, macos-13, macos-latest, windows-latest]
