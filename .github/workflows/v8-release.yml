@@ -74,6 +74,10 @@ jobs:
           archive-name: ${{ env.ARCHIVE_NAME }}
 
       - name: Upload Archive
+        # Runs even when the smoke test failed: the archive step ahead of it
+        # already produced the file, and an artifact you can inspect beats one
+        # discarded because a test script had a bad flag.
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARCHIVE_NAME }}

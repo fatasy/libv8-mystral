@@ -47,10 +47,13 @@ runs:
     - name: Setup Developer Command Prompt
       uses: ilammy/msvc-dev-cmd@v1
 
-    - name: Test V8
-      shell: cmd
-      run: .\v8_test.bat
-
+    # Archive first. The archive does not depend on the test, and losing a
+    # 1h40m build to a failing smoke test is a bad trade: the job still fails
+    # and reports it, but the artifact survives to be inspected.
     - name: Archive V8
       shell: pwsh
       run: .\archive.bat ${{ inputs.archive-name }}
+
+    - name: Test V8
+      shell: cmd
+      run: .\v8_test.bat
