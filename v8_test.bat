@@ -37,10 +37,10 @@ if not exist "%libcxxInc%" (
 call "%clangcl%" /EHsc /std:c++20 /Zc:__cplusplus /MT ^
   /D_LIBCPP_ABI_NAMESPACE=__Cr /D_LIBCPP_HAS_NO_LIBRARY_ALIGNED_ALLOCATION ^
   /experimental:library-preprocessor- ^
-  -nostdinc++ -isystem"%libcxxInc%" ^
+  /clang:-nostdinc++ /imsvc"%libcxxInc%" ^
   /I"%dir%\v8" /I"%dir%\v8\include" ^
   /Fe".\hello-world" "%dir%\v8\samples\hello-world.cc" ^
-  /link "%dir%\v8\out\release\obj\v8_monolith.lib" ^
+  /link "%dir%\pack\v8_monolith.lib" ^
   /DEFAULTLIB:advapi32.lib /DEFAULTLIB:dbghelp.lib /DEFAULTLIB:winmm.lib
 
 if errorlevel 1 (
