@@ -11,3 +11,20 @@ v8_use_external_startup_data=false
 symbol_level=0
 strip_debug_info=true
 treat_warnings_as_errors=false
+
+# Link against the platform standard library, not Chromium's bundled libc++.
+#
+# MystralNative builds with the MSVC STL, as do the Dawn and Skia artifacts it
+# links beside this one. A V8 built with the in-tree libc++ puts every standard
+# type in the std::__Cr inline namespace, so nothing matches: the first build
+# with this unset failed with 358 unresolved externals on std::__Cr::mutex,
+# std::__Cr::basic_string and friends. It links against nothing outside V8.
+#
+# Upstream kuoruan/libv8 used to set this and stopped; V8 13.1.201.22, the
+# version MystralNative pins, was built with it false.
+#
+# V8 warns that this flag is deprecated and will be removed. When that happens
+# the whole toolchain has to move to Chromium's libc++ together -- V8, Dawn and
+# Skia -- or stay on the last version that allows this. Tracked in
+# mystralnative/tasks/plans/21-v8-update.md.
+use_custom_libcxx=false
