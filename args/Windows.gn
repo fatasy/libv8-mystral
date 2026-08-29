@@ -28,3 +28,18 @@ treat_warnings_as_errors=false
 # Skia -- or stay on the last version that allows this. Tracked in
 # mystralnative/tasks/plans/21-v8-update.md.
 use_custom_libcxx=false
+
+# Pinned explicitly, not inherited.
+#
+# Every configuration problem in this port came from a default that changed
+# between V8 13.1 and 15.2 while this file said nothing: use_custom_libcxx
+# flipped to true, and the sandbox turned on. A default is not a decision, and
+# it changes without telling you.
+#
+# The sandbox requires libc++ hardening, which requires Chromium's libc++:
+#   assert(!v8_enable_sandbox || use_safe_libcxx)
+# So with the platform standard library it cannot be enabled. It also requires
+# pointer compression, which V8 13.1.201.22 -- the version MystralNative pins
+# today -- was built without.
+v8_enable_sandbox=false
+v8_enable_pointer_compression=false
