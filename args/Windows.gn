@@ -42,4 +42,21 @@ use_custom_libcxx=false
 # pointer compression, which V8 13.1.201.22 -- the version MystralNative pins
 # today -- was built without.
 v8_enable_sandbox=false
-v8_enable_pointer_compression=false
+
+# Pointer compression ON, unlike V8 13.1.201.22.
+#
+# With it off, V8 15.2 fails to compile: Torque's layout model disagrees with
+# the C++ struct by exactly four bytes on JSAtomicsMutex and
+# JSAtomicsCondition --
+#   static_assert(kOwnerThreadIdOffset == offsetof(...)) -- '40 == 36'
+# which is a pointer field changing width, not anything to do with the standard
+# library. These objects were added since 13.1 and appear only to be exercised
+# in the compressed layout.
+#
+# It is also the configuration Chrome ships and the one worth wanting: tagged
+# fields go from 8 bytes to 4, so the heap is materially smaller and cache
+# behaviour better. The cost is a 4 GB ceiling on the JavaScript heap, which is
+# far above anything MystralNative has needed -- see
+# mystralnative/tasks/plans/21-v8-update.md, where this was already flagged as
+# a decision to make deliberately rather than inherit.
+v8_enable_pointer_compression=true
