@@ -12,51 +12,23 @@ symbol_level=0
 strip_debug_info=true
 treat_warnings_as_errors=false
 
-# Link against the platform standard library, not Chromium's bundled libc++.
-#
-# MystralNative builds with the MSVC STL, as do the Dawn and Skia artifacts it
-# links beside this one. A V8 built with the in-tree libc++ puts every standard
-# type in the std::__Cr inline namespace, so nothing matches: the first build
-# with this unset failed with 358 unresolved externals on std::__Cr::mutex,
-# std::__Cr::basic_string and friends. It links against nothing outside V8.
-#
-# Upstream kuoruan/libv8 used to set this and stopped; V8 13.1.201.22, the
-# version MystralNative pins, was built with it false.
-#
-# V8 warns that this flag is deprecated and will be removed. When that happens
-# the whole toolchain has to move to Chromium's libc++ together -- V8, Dawn and
-# Skia -- or stay on the last version that allows this. Tracked in
-# mystralnative/tasks/plans/21-v8-update.md.
-use_custom_libcxx=false
 
-# Pinned explicitly, not inherited.
+# The configuration V8 is actually built and tested in, pinned rather than
+# inherited.
 #
-# Every configuration problem in this port came from a default that changed
-# between V8 13.1 and 15.2 while this file said nothing: use_custom_libcxx
-# flipped to true, and the sandbox turned on. A default is not a decision, and
-# it changes without telling you.
+# Every configuration problem in this port came from a default that moved
+# between 13.1 and 15.2 while this file said nothing. So these are explicit
+# even where they match today's defaults.
 #
-# The sandbox requires libc++ hardening, which requires Chromium's libc++:
-#   assert(!v8_enable_sandbox || use_safe_libcxx)
-# So with the platform standard library it cannot be enabled. It also requires
-# pointer compression, which V8 13.1.201.22 -- the version MystralNative pins
-# today -- was built without.
-v8_enable_sandbox=false
-
-# Pointer compression ON, unlike V8 13.1.201.22.
+# The platform standard library is no longer an option here. V8 15.2 does not
+# compile against it: Torque and the C++ structs disagree on object layout --
+# JSAtomicsMutex at '40 == 36' without pointer compression, JSInterceptorMap at
+# a flat three-byte shift with it. Chromium's libc++ is what the V8 team builds
+# against, so it is what works.
 #
-# With it off, V8 15.2 fails to compile: Torque's layout model disagrees with
-# the C++ struct by exactly four bytes on JSAtomicsMutex and
-# JSAtomicsCondition --
-#   static_assert(kOwnerThreadIdOffset == offsetof(...)) -- '40 == 36'
-# which is a pointer field changing width, not anything to do with the standard
-# library. These objects were added since 13.1 and appear only to be exercised
-# in the compressed layout.
-#
-# It is also the configuration Chrome ships and the one worth wanting: tagged
-# fields go from 8 bytes to 4, so the heap is materially smaller and cache
-# behaviour better. The cost is a 4 GB ceiling on the JavaScript heap, which is
-# far above anything MystralNative has needed -- see
-# mystralnative/tasks/plans/21-v8-update.md, where this was already flagged as
-# a decision to make deliberately rather than inherit.
+# Consumers therefore need libc++ too, which is why archive.bat folds it into
+# the monolith rather than leaving 358 unresolved std::__Cr symbols for whoever
+# links this.
+use_custom_libcxx=true
 v8_enable_pointer_compression=true
+v8_enable_sandbox=true

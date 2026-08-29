@@ -40,8 +40,42 @@ if not exist "%outputDir%" (
   mkdir "%outputDir%"
 )
 
+rem The monolith does not carry libc++. V8 is built against Chromium's libc++
+rem (use_custom_libcxx=true, which recent V8 requires), but libc++ is a GN
+rem source_set, so its objects land in out/ and never reach v8_monolith.lib --
+rem linking the artifact then fails on hundreds of unresolved std::__Cr symbols.
+rem
+rem Fold those objects in, so the artifact is self-contained and consumers keep
+rem linking exactly one library.
+set "libcxxObjs=%dir%\v8\out\release\obj\buildtools\third_party\libc++\libc++"
+if exist "%libcxxObjs%" (
+  echo Folding libc++ into the monolith
+  lib.exe /NOLOGO /OUT:"%dir%\v8\out\release\obj\v8_monolith_full.lib" ^
+    "%dir%\v8\out\release\obj\v8_monolith.lib" "%libcxxObjs%\*.obj"
+  if errorlevel 1 (
+    echo Failed to fold libc++ into the monolith
+    exit /b 1
+  )
+  copy /Y "%dir%\v8\out\release\obj\v8_monolith_full.lib" "%outputDir%\v8_monolith.lib"
+) else (
+  echo libc++ objects not found at %libcxxObjs%
+  exit /b 1
+)
+
 xcopy /E /I /Q /Y "%dir%\v8\include" "%outputDir%"
-copy /Y "%dir%\v8\out\release\obj\v8_monolith.lib" "%outputDir%"
+
+rem libc++ headers. Consumers compile against these instead of the platform
+rem standard library, which is the whole point: one std, shared with V8.
+rem Chromium moved this path once already, so both layouts are accepted and a
+rem miss is an error rather than a silently header-less artifact.
+if exist "%dir%\v8\third_party\libc++\src\include" (
+  xcopy /E /I /Q /Y "%dir%\v8\third_party\libc++\src\include" "%outputDir%\libcxx-include"
+) else if exist "%dir%\v8\buildtools\third_party\libc++\trunk\include" (
+  xcopy /E /I /Q /Y "%dir%\v8\buildtools\third_party\libc++\trunk\include" "%outputDir%\libcxx-include"
+) else (
+  echo libc++ headers not found
+  exit /b 1
+)
 copy /Y "%dir%\gn-args_%os%.txt" "%outputDir%"
 
 where 7z >nul 2>nul
