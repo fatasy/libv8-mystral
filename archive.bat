@@ -94,6 +94,33 @@ if exist "%libcxxCfg%\__config_site" (
   exit /b 1
 )
 
+rem The _LIBCPP_* defines that libc++ needs are NOT in __config_site -- that file
+rem says so itself: "Things that are set depending on GN args are not here."
+rem They are passed on the command line by build/config/libc++, and libc++
+rem refuses to compile without them (_LIBCPP_HARDENING_MODE_DEFAULT is not
+rem defined). Guessing is not an option: the hardening mode changes container
+rem layout, so a wrong value links and then misbehaves.
+rem
+rem Take them from the generated ninja files, which record the exact flags this
+rem library was compiled with.
+set "definesFile=%outputDir%\libcxx-defines.txt"
+findstr /s /c:"_LIBCPP_HARDENING_MODE" "%dir%\v8\out\release\*.ninja" > "%dir%\libcxx-raw.txt" 2>nul
+if not exist "%dir%\libcxx-raw.txt" (
+  echo Could not read libc++ defines from the ninja files
+  exit /b 1
+)
+powershell -NoProfile -Command ^
+  "$m = Select-String -Path '%dir%\v8\out\release\*.ninja' -Pattern '-D(_LIBCPP_[A-Za-z0-9_]+(=[^ ]*)?)' -AllMatches;" ^
+  "$d = $m.Matches | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique;" ^
+  "if (-not $d) { exit 1 };" ^
+  "$d | Set-Content -Encoding ascii '%definesFile%'"
+if errorlevel 1 (
+  echo No _LIBCPP defines found
+  exit /b 1
+)
+echo libc++ defines:
+type "%definesFile%"
+
 where 7z >nul 2>nul
 if errorlevel 1 (
   echo 7z not found
