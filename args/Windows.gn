@@ -17,10 +17,10 @@ treat_warnings_as_errors=false
 # inherited.
 #
 # Every configuration problem in this port came from a default that moved
-# between 13.1 and 15.2 while this file said nothing. So these are explicit
+# between 13.1 and 15.x while this file said nothing. So these are explicit
 # even where they match today's defaults.
 #
-# The platform standard library is no longer an option here. V8 15.2 does not
+# The platform standard library is no longer an option here. V8 15.x does not
 # compile against it: Torque and the C++ structs disagree on object layout --
 # JSAtomicsMutex at '40 == 36' without pointer compression, JSInterceptorMap at
 # a flat three-byte shift with it. Chromium's libc++ is what the V8 team builds

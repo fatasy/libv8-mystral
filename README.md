@@ -1,5 +1,5 @@
 > **Fork note.** Upstream (`kuoruan/libv8`) still tracks V8 within days — tags
-> exist through `v15.2.124.18` — but its release publishing stopped at
+> exist through `v15.3.76.4` — but its release publishing stopped at
 > `v13.1.201.22` (2025-01-08), so those tags carry no downloadable artifacts.
 > The likely cause is that its `secrets.PAT` lapsed: `v8-version-check.yml`
 > checks out with that token and pushes the tags, and a push made with the
